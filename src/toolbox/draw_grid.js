@@ -3,7 +3,7 @@ import {
 } from 'pixi.js';
 import {
   moduleSize
-} from './data/dimensions';
+} from 'data/dimensions';
 
 const drawGrid = () => {
   const grid = new Graphics();

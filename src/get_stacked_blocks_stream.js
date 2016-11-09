@@ -9,7 +9,7 @@ const getEachModulePosition = (
     active: module
   })
 )).reduce(
-  (allModules, row) => allModules.concat(row), []
+  (allModules, row) => allModules.concat(row)
 ).filter(
   ({ active }) => active
 ).map(

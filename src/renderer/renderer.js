@@ -10,7 +10,7 @@ import {
 } from 'data/blocks';
 import {
   activeBlock$
-} from 'tick';
+} from 'model/active_block_stream';
 import {
   moduleSize,
   boardSize,
@@ -23,8 +23,8 @@ import {
   reduceObj,
   mapObj
 } from 'toolbox/object';
-import remountSpriteByID from 'remount_sprite_by_id';
-import drawGrid from 'draw_grid';
+import remountSpriteByID from 'toolbox/remount_sprite_by_id';
+import drawGrid from 'toolbox/draw_grid';
 import getStackedBlocksStream from 'get_stacked_blocks_stream';
 import mergePositionWithSprites from 'renderer/merge_position_with_sprites';
 
