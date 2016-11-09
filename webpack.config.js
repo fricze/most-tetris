@@ -5,8 +5,7 @@ module.exports = {
   context: __dirname,
 
   entry: {
-   main: ['./rx_exercises/main.js'],
- // final: ['./rx_final/no-arch.js']
+    main: ['./src/main.js'],
   },
 
   devtool: 'source-map',
@@ -34,7 +33,7 @@ module.exports = {
   },
 
   resolve: {
-    root: path.resolve(__dirname),
+    root: path.resolve(__dirname.concat('/src')),
     modulesDirectories: ['node_modules'],
     extensions: ['', '.js']
   }
