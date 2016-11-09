@@ -1,6 +1,4 @@
-import {
-  fromEvent
-} from 'most';
+import { fromEvent } from 'most';
 
 const keyDown$ = fromEvent('keydown', window);
 

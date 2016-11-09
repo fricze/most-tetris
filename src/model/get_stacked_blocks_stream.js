@@ -1,4 +1,9 @@
+import { activeBlock$ } from 'model/active_block_stream';
 import mergePositionWithSprites from 'renderer/merge_position_with_sprites';
+import {
+  moduleSize,
+  bottomPositionBound
+} from 'data/dimensions';
 
 const getEachModulePosition = (
   { block: { shape, x, y }, moduleSize }
@@ -12,9 +17,9 @@ const getEachModulePosition = (
   (allModules, row) => allModules.concat(row)
 ).filter(
   ({ active }) => active
-).map(
   // used to pass only required data
   // here: only x, y coordinates
+).map(
   ({ x, y }) => ({ x, y })
 );
 
@@ -23,11 +28,7 @@ const blockReachedBottom = bottomPositionBound =>
 
 const compareCounters = (block1, block2) => block1.counter === block2.counter;
 
-const getStackedBlocksStream = (
-  blockPosition$
-) => (
-  moduleSize, bottomPositionBound, imagesForBlocks
-) => blockPosition$.map(block => ({
+const stackedBlocks$ = activeBlock$.map(block => ({
   ...block,
   modulesPositions: getEachModulePosition({
     block,
@@ -37,7 +38,11 @@ const getStackedBlocksStream = (
   blockReachedBottom(bottomPositionBound)
 ).skipRepeatsWith(
   compareCounters
-).map(
+);
+
+const getStackedBlocksStream = (
+  imagesForBlocks
+) => stackedBlocks$.map(
   mergePositionWithSprites(imagesForBlocks)
 ).scan(
   (allBlocks, positionWithSprite) => allBlocks.concat([

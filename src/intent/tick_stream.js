@@ -1,6 +1,4 @@
-import {
-  periodic
-} from 'most';
+import { periodic } from 'most';
 
 const tick$ = periodic(1000, 1);
 

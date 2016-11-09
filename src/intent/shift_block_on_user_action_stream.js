@@ -6,9 +6,12 @@ import {
   moveDown
 } from 'actions/arrows_actions';
 
-const moveBlock$ = keyDown$
+const shiftBlockOnUserAction$ = keyDown$
         .map(event => event.key)
         .filter(keyName => arrowsActionsNames.includes(keyName))
         .map(keyName => arrowsActions[keyName])
+        .throttle(100);
 
-export default share(moveBlock$);
+const spawnShiftBlockOnUserAction$ = share(shiftBlockOnUserAction$);
+
+export default spawnShiftBlockOnUserAction$;
