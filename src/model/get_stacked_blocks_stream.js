@@ -40,14 +40,4 @@ const stackedBlocks$ = activeBlock$.map(block => ({
   compareCounters
 );
 
-const getStackedBlocksStream = (
-  imagesForBlocks
-) => stackedBlocks$.map(
-  mergePositionWithSprites(imagesForBlocks)
-).scan(
-  (allBlocks, positionWithSprite) => allBlocks.concat([
-    positionWithSprite
-  ]), []
-);
-
-export default getStackedBlocksStream;
+export default stackedBlocks$;

@@ -25,7 +25,7 @@ import {
 } from 'toolbox/object';
 import remountSpriteByID from 'toolbox/remount_sprite_by_id';
 import drawGrid from 'toolbox/draw_grid';
-import getStackedBlocksStream from 'model/get_stacked_blocks_stream';
+import stackedBlocks$ from 'model/get_stacked_blocks_stream';
 import mergePositionWithSprites from 'renderer/merge_position_with_sprites';
 
 const assetsPath = '../assets/';
@@ -34,19 +34,21 @@ const pointsEqual = (p1, p2) => p1.x === p2.x && p1.y === p2.y;
 
 const mountActiveBlockSpriteById = remountSpriteByID();
 
+const pixiLoader = loader;
+
 blocks.reduce(
-  // load every shape with proper image and return loader
+  // load every shape with proper image and return pixiLoader
   // to handle 'load' event
-  (loader, { name, imgSrcObj }) => reduceObj(
+  (pixiLoader, { name, imgSrcObj }) => reduceObj(
     imgSrcObj,
-    (loader, { key: imgRotation, value: imgSrc }) => loader.add(
+    (pixiLoader, { key: imgRotation, value: imgSrc }) => pixiLoader.add(
       name.concat('_').concat(imgRotation), assetsPath.concat(imgSrc)
     ),
-    loader
+    pixiLoader
   ),
-  loader
+  pixiLoader
   // reduce goes through all images, loads them
-  // and returns loader, so one can subscribe to
+  // and returns pixiLoader, so one can subscribe to
   // 'load' event on it
 );
 
@@ -62,7 +64,7 @@ const onImagesLoad = resources => getImagesForBlocks(blocks, resources)
 const resources$ = fromPromise(
   new Promise(
     (resolve, reject) =>
-      loader.load((loader, resources) => resolve(resources))
+      pixiLoader.load((pixiLoader, resources) => resolve(resources))
   )
 ).map(resources => onImagesLoad(resources));
 
@@ -114,25 +116,28 @@ const containers$ = just({
   activeBlockContainer: new Container()
 });
 
-
-
-const blockPositionWithSprite$ = combine(
+const activeBlockWithSprite$ = combine(
   (block, imagesForBlocks) => mergePositionWithSprites(imagesForBlocks)(block),
   activeBlock$,
   resources$
 );
 
-// const stackedBlocks$ = getStackedBlocksStream(
-//   imagesForBlocks
-// );
+const stackedBlocksWithSprites$ = combine(
+  (block, imagesForBlocks) => mergePositionWithSprites(imagesForBlocks)(block),
+  stackedBlocks$,
+  resources$
+).scan(
+  (allBlocks, positionWithSprite) => allBlocks.concat([
+    positionWithSprite
+  ]), []
+);
 
 const activeBlockWithStackedBlocks$ = combine(
   (activeBlock, stackedBlocks, renderer, containers) => ({
     activeBlock, stackedBlocks, renderer, containers
   }),
-  blockPositionWithSprite$,
-  just([]),
-  // stackedBlocks$,
+  activeBlockWithSprite$,
+  stackedBlocksWithSprites$,
   renderer$,
   containers$
 );
