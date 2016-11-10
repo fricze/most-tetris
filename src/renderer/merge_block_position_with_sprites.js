@@ -12,9 +12,9 @@ const getSpritesForBlock = (blockID, imagesForBlocks) => mapObj(
   ({ texture }) => new Sprite(texture)
 );
 
-const mergePositionWithSprites = imagesForBlocks => position => ({
+const mergeBlockPositionWithSprites = imagesForBlocks => position => ({
   ...position,
   sprites: getSpritesForBlock(position.blockID, imagesForBlocks)
 });
 
-export default mergePositionWithSprites;
+export default mergeBlockPositionWithSprites;

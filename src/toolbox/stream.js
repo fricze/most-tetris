@@ -1,7 +1,7 @@
 import { proxy } from 'most-proxy';
 
-const _share = (srcStream, { attach, stream }) => () => {
+export const share = (srcStream) => () => {
+  const { attach, stream } = proxy();
   attach(srcStream);
   return stream;
 };
-export const share = srcStream => _share(srcStream, proxy());

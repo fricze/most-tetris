@@ -1,14 +1,12 @@
 import {
   autoDetectRenderer,
-  loader,
   Sprite,
   Container,
   Graphics
 } from 'pixi.js';
-import {
-  blocks
-} from 'data/blocks';
-import { activeBlock$ } from 'model/active_block_stream';
+import { blocks } from 'data/blocks';
+import spawnActiveBlock$ from 'view/active_block_stream';
+import spawnStackedBlocks$ from 'view/stacked_blocks_stream';
 import {
   moduleSize,
   boardSize,
@@ -25,67 +23,43 @@ import {
 } from 'toolbox/object';
 import remountSpriteByID from 'toolbox/remount_sprite_by_id';
 import drawGrid from 'toolbox/draw_grid';
-import stackedBlocks$ from 'model/get_stacked_blocks_stream';
-import mergePositionWithSprites from 'renderer/merge_position_with_sprites';
-
-const assetsPath = '../assets/';
-
-const pointsEqual = (p1, p2) => p1.x === p2.x && p1.y === p2.y;
+import mergeBlockPositionWithSprites from 'renderer/merge_block_position_with_sprites';
+import mergeBlockWithResources from 'renderer/merge_block_with_resources';
+import loadResources from 'renderer/load_resources'
+import renderer$ from 'renderer/renderer_stream';
+import containers$, { addContainersToBaseContainer } from 'renderer/containers_stream';
 
 const mountActiveBlockSpriteById = remountSpriteByID();
 
-const pixiLoader = loader;
+const resources$ = fromPromise(loadResources())
+        .map(resources => mergeBlockWithResources(blocks, resources));
 
-blocks.reduce(
-  // load every shape with proper image and return pixiLoader
-  // to handle 'load' event
-  (pixiLoader, { name, imgSrcObj }) => reduceObj(
-    imgSrcObj,
-    (pixiLoader, { key: imgRotation, value: imgSrc }) => pixiLoader.add(
-      name.concat('_').concat(imgRotation), assetsPath.concat(imgSrc)
-    ),
-    pixiLoader
-  ),
-  pixiLoader
-  // reduce goes through all images, loads them
-  // and returns pixiLoader, so one can subscribe to
-  // 'load' event on it
-);
+const activeBlock$ = spawnActiveBlock$();
 
-const getImagesForBlocks = (blocks, resources) => blocks.map(
-  block => mapObj(
-    block.imgSrcObj,
-    (_, rotationKey) => resources[block.name.concat('_').concat(rotationKey)]
-  )
-);
-
-const onImagesLoad = resources => getImagesForBlocks(blocks, resources)
-
-const resources$ = fromPromise(
-  new Promise(
-    (resolve, reject) =>
-      pixiLoader.load((pixiLoader, resources) => resolve(resources))
-  )
-).map(resources => onImagesLoad(resources));
+const grid = drawGrid();
 
 const renderStage = ({
   stageContainer, activeBlockContainer, stackedBlocksContainer, renderer
 }) => {
-  stageContainer.addChild(activeBlockContainer);
-  stageContainer.addChild(stackedBlocksContainer);
-  stageContainer.addChild(drawGrid());
+  addContainersToBaseContainer([
+    activeBlockContainer, stackedBlocksContainer, grid
+  ], stageContainer);
+
   renderer.render(stageContainer);
 };
 
 const animate = (
-  { x, y,
-    rotation,
-    sprites
-  },
+  activeBlock,
   stackedBlocks,
   renderer,
   containers
 ) => () => {
+  const {
+    x, y,
+    rotation,
+    sprites
+  } = activeBlock;
+
   const activeSprite = sprites[rotation];
 
   mountActiveBlockSpriteById(rotation, activeSprite, containers.activeBlockContainer);
@@ -105,25 +79,16 @@ const animate = (
   });
 };
 
-const renderer$ = just(new autoDetectRenderer(boardSize.width, boardSize.height));
-renderer$.observe(
-  renderer => document.body.appendChild(renderer.view)
-);
-
-const containers$ = just({
-  stageContainer: new Container(),
-  stackedBlocksContainer: new Container(),
-  activeBlockContainer: new Container()
-});
-
 const activeBlockWithSprite$ = combine(
-  (block, imagesForBlocks) => mergePositionWithSprites(imagesForBlocks)(block),
+  (block, imagesForBlocks) => mergeBlockPositionWithSprites(imagesForBlocks)(block),
   activeBlock$,
   resources$
 );
 
+const stackedBlocks$ = spawnStackedBlocks$();
+
 const stackedBlocksWithSprites$ = combine(
-  (block, imagesForBlocks) => mergePositionWithSprites(imagesForBlocks)(block),
+  (block, imagesForBlocks) => mergeBlockPositionWithSprites(imagesForBlocks)(block),
   stackedBlocks$,
   resources$
 ).scan(
