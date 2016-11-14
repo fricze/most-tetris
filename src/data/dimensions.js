@@ -1,7 +1,7 @@
 export const moduleSize = 16;
 
-const horizontalBlocks = 20;
-const verticalBlocks = 10;
+export const horizontalBlocks = 10;
+export const verticalBlocks = 20;
 
 export const boardSize = {
   width: moduleSize * horizontalBlocks,

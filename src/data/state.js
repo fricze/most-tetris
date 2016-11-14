@@ -1,8 +1,7 @@
+import { blocks } from './blocks';
 import {
-  blocks
-} from './blocks';
-import {
-  moduleSize
+  moduleSize,
+  horizontalBlocks
 } from './dimensions';
 
 const getRandomId = ({ length }) => (Math.ceil(Math.random() * length)) - 1;
@@ -14,8 +13,8 @@ export const getStartPosition = () => {
   counter = counter + 1;
 
   return {
-    x: moduleSize * 10,
-    y: 0,
+    x: moduleSize * (Math.floor(horizontalBlocks / 2) - 2),
+    y: -moduleSize,
     rotation: 0,
     blockID,
     shape: blocks[blockID].shape,

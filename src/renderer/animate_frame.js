@@ -25,12 +25,13 @@ const animateFrame = (
   const {
     x, y,
     rotation,
-    sprites
+    sprites,
+    counter
   } = activeBlock;
 
   const activeSprite = sprites[rotation];
 
-  mountActiveBlockSpriteById(rotation, activeSprite, containers.activeBlockContainer);
+  mountActiveBlockSpriteById(rotation + counter, activeSprite, containers.activeBlockContainer);
 
   containers.activeBlockContainer.y = y;
   containers.activeBlockContainer.x = x;

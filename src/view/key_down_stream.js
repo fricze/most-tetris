@@ -1,5 +1,6 @@
 import { fromEvent } from 'most';
 
-const keyDown$ = fromEvent('keydown', window);
+const keyDownName$ = fromEvent('keydown', window)
+        .map(event => event.key);
 
-export default keyDown$;
+export default keyDownName$;

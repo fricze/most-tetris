@@ -1,0 +1,58 @@
+import { proxy } from 'most-proxy';
+import { getStartPosition } from 'data/state';
+import { blockDidntReachBottom } from 'model/check_block_position';
+import {
+  moduleSize,
+  bottomPositionBound
+} from 'data/dimensions';
+import getEachModulePosition from 'model/get_each_module_position';
+import {
+  pipe
+} from 'fn';
+import {
+  scan,
+  map,
+  filter
+} from 'most-curry';
+
+const {
+  attach: attachShiftBlock$,
+  stream: shiftBlock$
+} = proxy();
+
+const activeBlock$ = shiftBlock$.scan(
+  (currentPosition, transform) => transform(currentPosition), getStartPosition()
+).map(block => ({
+  ...block,
+  modulesPositions: getEachModulePosition({
+    block,
+    moduleSize
+  })
+})).filter(
+  blockDidntReachBottom(bottomPositionBound)
+);
+
+const activeBlock = pipe(
+  scan(
+    (currentPosition, transform) => transform(currentPosition), getStartPosition()
+  ),
+  map(
+    map,
+    block => ({
+      ...block,
+      modulesPositions: getEachModulePosition({
+        block,
+        moduleSize
+      })
+    })
+  ),
+  partial(
+    filter,
+    blockDidntReachBottom(bottomPositionBound)
+  )
+);
+
+export {
+  activeBlock$,
+  attachShiftBlock$
+};

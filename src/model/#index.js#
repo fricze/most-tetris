@@ -1,0 +1,9 @@
+import constantActiveBlockPosition$ from './active_block_position';
+
+const observe = ({
+  shiftBlock$
+}) => ({
+  blocks$: constantActiveBlockPosition$(shiftBlock$)
+});
+
+export default observe;

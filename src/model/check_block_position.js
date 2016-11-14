@@ -1,5 +1,10 @@
-export const blockReachedBottom = bottomPositionBound =>
-  ({ modulesPositions }) => modulesPositions.some(({ y }) => y >= bottomPositionBound);
+import { curry } from 'fn';
 
-export const blockDidntReachBottom = bottomPositionBound =>
-  ({ modulesPositions }) => modulesPositions.every(({ y }) => y <= bottomPositionBound);
+export const blockReachedBottom = curry(
+  (bottomPositionBound, { modulesPositions }) =>
+    modulesPositions.some(({ y }) => y >= bottomPositionBound)
+);
+export const blockDidntReachBottom = curry(
+  (bottomPositionBound, { modulesPositions }) =>
+    modulesPositions.every(({ y }) => y <= bottomPositionBound)
+);
