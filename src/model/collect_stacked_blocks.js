@@ -1,22 +1,53 @@
 import { blockReachedBottom } from 'model/check_block_position';
-import { bottomPositionBound } from 'data/dimensions';
+import {
+  bottomPositionBound,
+  boardSize,
+  moduleSize
+} from 'data/dimensions';
+import getEachModulePosition from 'model/get_each_module_position';
+import { pipe } from 'fn';
+import checkBoardBoundaries from 'model/check_board_boundaries';
+import checkNeighborsClash from 'model/check_neighbors_clash';
+import blocksToModulesPositions from 'model/blocks_to_modules_positions';
 
-const pointsEqual = (p1, p2) => p1.x === p2.x && p1.y === p2.y;
+const mergeBlockWithModulesPositions = block => ({
+  ...block,
+  modulesPositions: getEachModulePosition({
+    block,
+    moduleSize
+  })
+});
 
-const collectStackedBlocks = ({ stackedBlocks }, activeBlock) => {
-  const stackedPositions = stackedBlocks.map(
-    ({ modulesPositions }) => modulesPositions
-  ).reduce((acc, el) => acc.concat(el), []);
+const collectStackedBlocks = ({ stackedBlocks, activeBlock }, transform) => {
+  const stackedPositions = blocksToModulesPositions(stackedBlocks);
+
+  const activeBlockStep = pipe(
+    transform,
+    mergeBlockWithModulesPositions,
+    checkBoardBoundaries(boardSize, moduleSize)
+  );
+
+  const _checkNeighborsClash = checkNeighborsClash(stackedPositions, activeBlock);
+
+  activeBlock = activeBlockStep(activeBlock);
+  const { block, clash } = _checkNeighborsClash(activeBlock);
+
+  if (clash) {
+    return {
+      stackedBlocks,
+      activeBlock: block,
+      trashBlock: false
+    };
+  }
 
   const collision = activeBlock.modulesPositions
           .some(activePosition => stackedPositions.some(
             stackedPosition => activePosition.x === stackedPosition.x &&
-              (stackedPosition.y - activePosition.y) === 16
+              (stackedPosition.y - activePosition.y) === moduleSize
           ));
 
   if ((blockReachedBottom(bottomPositionBound, activeBlock) || collision)
       && !stackedBlocks.find(({ counter }) => counter === activeBlock.counter)) {
-
     return {
       stackedBlocks: stackedBlocks.concat([activeBlock]),
       activeBlock,
@@ -26,7 +57,8 @@ const collectStackedBlocks = ({ stackedBlocks }, activeBlock) => {
 
   return {
     stackedBlocks,
-    activeBlock
+    activeBlock,
+    trashBlock: false
   };
 };
 

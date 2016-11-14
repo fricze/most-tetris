@@ -1,5 +1,4 @@
 import { getStartPosition } from 'data/state';
-import { moduleSize } from 'data/dimensions';
 import getEachModulePosition from 'model/get_each_module_position';
 import { pipe } from 'fn';
 import {
@@ -15,48 +14,19 @@ import {
 } from 'model/check_block_position';
 import {
   bottomPositionBound,
-  boardSize
+  boardSize,
+  moduleSize
 } from 'data/dimensions';
 import collectStackedBlocks from 'model/collect_stacked_blocks';
 
-const blockWithModulesPositions$ = map(block => ({
-  ...block,
-  modulesPositions: getEachModulePosition({
-    block,
-    moduleSize
-  })
-}));
-
-const transformingPosition$ = startPosition => scan(
-  (currentPosition, transform) => {
-    const newBlock = transform(currentPosition);
-    const blockWidth = newBlock.shape[0].length * moduleSize;
-
-    if (newBlock.x < 0) {
-      newBlock.x = 0;
-    }
-
-    if (newBlock.x + blockWidth > boardSize.width) {
-      newBlock.x = boardSize.width - blockWidth;
-    }
-
-    return newBlock;
-  }, startPosition
-);
-
-const activeBlockPosition$ = startPosition => pipe(
-  transformingPosition$(startPosition),
-  blockWithModulesPositions$
-);
-
-const constantActiveBlockPosition$ = (source, stackedBlocks = []) => pipe(
-  activeBlockPosition$(getStartPosition()),
-  scan(collectStackedBlocks, { activeBlock: null, stackedBlocks }),
-  filter(({ activeBlock }) => !!activeBlock),
-  takeWhile(
-    ({ trashBlock }) => !trashBlock
-  ),
-  continueWith(({ stackedBlocks }) => constantActiveBlockPosition$(source, stackedBlocks))
+const blocksPosition$ = (source, stackedBlocks = []) => pipe(
+  scan(collectStackedBlocks, {
+    activeBlock: getStartPosition(),
+    stackedBlocks,
+    trashBlock: false
+  }),
+  takeWhile(({ trashBlock }) => !trashBlock),
+  continueWith(({ stackedBlocks }) => blocksPosition$(source, stackedBlocks))
 )(source);
 
-export default constantActiveBlockPosition$;
+export default blocksPosition$;
