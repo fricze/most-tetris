@@ -4,61 +4,38 @@ import {
   boardSize,
   moduleSize
 } from 'data/dimensions';
-import getEachModulePosition from 'model/get_each_module_position';
 import { pipe } from 'fn';
 import checkBoardBoundaries from 'model/check_board_boundaries';
 import checkNeighborsClash from 'model/check_neighbors_clash';
 import blocksToModulesPositions from 'model/blocks_to_modules_positions';
+import checkBottomCollisions from 'model/check_bottom_collisions';
+import mergeBlockWithModulesPositions from 'model/merge_block_with_modules_positions';
+import { identity } from 'fn';
 
-const mergeBlockWithModulesPositions = block => ({
-  ...block,
-  modulesPositions: getEachModulePosition({
-    block,
-    moduleSize
-  })
-});
-
-const collectStackedBlocks = ({ stackedBlocks, activeBlock }, transform) => {
+const collectStackedBlocks = ({ stackedBlocks, activeBlock: currentActiveBlock }, transform) => {
   const stackedPositions = blocksToModulesPositions(stackedBlocks);
 
   const activeBlockStep = pipe(
     transform,
-    mergeBlockWithModulesPositions,
-    checkBoardBoundaries(boardSize, moduleSize)
+    mergeBlockWithModulesPositions
   );
 
-  const _checkNeighborsClash = checkNeighborsClash(stackedPositions, activeBlock);
+  const newActiveBlock = activeBlockStep(currentActiveBlock);
 
-  activeBlock = activeBlockStep(activeBlock);
-  const { block, clash } = _checkNeighborsClash(activeBlock);
-
-  if (clash) {
-    return {
-      stackedBlocks,
-      activeBlock: block,
-      trashBlock: false
-    };
-  }
-
-  const collision = activeBlock.modulesPositions
-          .some(activePosition => stackedPositions.some(
-            stackedPosition => activePosition.x === stackedPosition.x &&
-              (stackedPosition.y - activePosition.y) === moduleSize
-          ));
-
-  if ((blockReachedBottom(bottomPositionBound, activeBlock) || collision)
-      && !stackedBlocks.find(({ counter }) => counter === activeBlock.counter)) {
-    return {
-      stackedBlocks: stackedBlocks.concat([activeBlock]),
-      activeBlock,
-      trashBlock: true
-    }
-  }
+  const {
+    activeBlock,
+    stackedBlock
+  } = checkBoardBoundaries(boardSize, moduleSize, { activeBlock: newActiveBlock })
+          .map(checkNeighborsClash(stackedPositions, currentActiveBlock))
+          .map(checkBottomCollisions(stackedPositions, moduleSize, stackedBlocks))
+          .valueOf();
 
   return {
-    stackedBlocks,
+    stackedBlocks: stackedBlocks.concat([stackedBlock]).filter(identity),
     activeBlock,
-    trashBlock: false
+    // if stackedBlock exists, current activeBlock should be removed
+    // from stream, and new one should be spawned
+    trashBlock: !!stackedBlock
   };
 };
 

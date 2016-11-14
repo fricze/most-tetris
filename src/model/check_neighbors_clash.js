@@ -1,9 +1,13 @@
 import { curry } from 'fn';
+import {
+  Just,
+  Const
+} from 'const_value';
 
 const pointsEqual = (p1, p2) => p1.x === p2.x && p1.y === p2.y;
 
-const checkNeighborsClash = (neighborsModulesPositions, oldBlock, block) => {
-  const { modulesPositions } = block;
+const checkNeighborsClash = (neighborsModulesPositions, oldBlock, { activeBlock }) => {
+  const { modulesPositions } = activeBlock;
 
   const collision = modulesPositions
           .some(activePosition => neighborsModulesPositions.some(
@@ -11,19 +15,15 @@ const checkNeighborsClash = (neighborsModulesPositions, oldBlock, block) => {
           ));
 
   if (collision) {
-    return {
-      block: {
-        ...block,
+    return Const({
+      activeBlock: {
+        ...activeBlock,
         x: oldBlock.x
-      },
-      clash: true
-    };
+      }
+    });
   }
 
-  return {
-    block,
-    clash: false
-  };
+  return Just({ activeBlock });
 };
 
 export default curry(checkNeighborsClash);

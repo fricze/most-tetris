@@ -1,23 +1,31 @@
 import { curry } from 'fn';
+import {
+  Just,
+  Const
+} from 'const_value';
 
-const checkBoardBoundaries = (boardSize, moduleSize, block) => {
-  const blockWidth = block.shape[0].length * moduleSize;
+const checkBoardBoundaries = (boardSize, moduleSize, { activeBlock }) => {
+  const blockWidth = activeBlock.shape[0].length * moduleSize;
 
-  if (block.x < 0) {
-    return {
-      ...block,
-      x: 0
-    };
+  if (activeBlock.x < 0) {
+    return Const({
+      activeBlock: {
+        ...activeBlock,
+        x: 0
+      }
+    });
   }
 
-  if (block.x + blockWidth > boardSize.width) {
-    return {
-      ...block,
-      x: boardSize.width - blockWidth
-    };
+  if (activeBlock.x + blockWidth > boardSize.width) {
+    return Const({
+      activeBlock: {
+        ...activeBlock,
+        x: boardSize.width - blockWidth
+      }
+    });
   }
 
-  return block;
+  return Just({ activeBlock });
 };
 
 export default curry(checkBoardBoundaries);
